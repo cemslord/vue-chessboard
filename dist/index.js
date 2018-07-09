@@ -18908,7 +18908,7 @@ exports.default = {
   return _c(
     "div",
     {
-      attrs: { title: _vm.decoratedVersion },
+      attrs: { alt: _vm.decoratedVersion },
       on: {
         dragover: function($event) {
           $event.preventDefault()

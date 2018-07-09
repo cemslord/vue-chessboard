@@ -3,7 +3,7 @@
 
 
 <template>
-  <div v-bind:title="decoratedVersion" @dragover.prevent="onDragOver">
+  <div v-bind:alt="decoratedVersion" @dragover.prevent="onDragOver">
     <!--<h2>{{ decoratedVersion }}</h2>-->
     <div style="display: flex;" v-for="y in 8" v-bind:key="y" @dblclick.stop="flip($event)">
       <div 
