@@ -18709,6 +18709,7 @@ exports.default = {
   name: "ChessBoard",
   props: {
     version: { type: String, required: false, default: '1.0.0' },
+    initialSelectedBg: { type: String, required: false, default: '#bde6ed' },
     initialLightBg: { type: String, required: false, default: '#F0D9B5' },
     initialDarkBg: { type: String, required: false, default: '#B58863' },
     initialFlipped: { type: Boolean, required: false, default: false },
@@ -18719,20 +18720,52 @@ exports.default = {
     return {
       title: "Vue Chessboard",
       sets: _chessSets2.default,
+      selectedBg: this.initialSelectedBg,
       lightBg: this.initialLightBg,
       darkBg: this.initialDarkBg,
       flipped: this.initialFlipped,
-      lightSqStyle: { textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: this.initialLightBg },
-      darkSqStyle: { textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: this.initialDarkBg },
-      selectedSqStyle: { textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: '#00f0f0' },
       emptyPos: "0".repeat(64),
       position: this.initialPos,
       chessSet: this.initialChessSet,
       sqFrom: -1,
-      isDragging: false
+      isDragging: false,
+      isMounted: false
     };
   },
+  mounted: function mounted() {
+    this.$nextTick(function () {
+      this.isMounted = true;
+      var board = this;
+      window.addEventListener('resize', function () {
+        board.$forceUpdate();
+      });
+    });
+  },
   methods: {
+    getSqHeight: function getSqHeight() {
+      if (!this.isMounted) return '5vw';
+      var sq0 = document.getElementsByClassName('square')[0];
+      // console.log(`Square height should be ${sq0.offsetWidth}px`)
+      return sq0.offsetWidth + 'px';
+    },
+    getSqStyle: function getSqStyle() {
+      return { textAlign: 'center', width: '100%', height: this.getSqHeight() };
+    },
+    getLightSqStyle: function getLightSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.lightBg;
+      return tempStyle;
+    },
+    getDarkSqStyle: function getDarkSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.darkBg;
+      return tempStyle;
+    },
+    getSelectedSqStyle: function getSelectedSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.selectedBg;
+      return tempStyle;
+    },
     reset: function reset() {
       this.position = this.initialPos;
     },
@@ -18759,15 +18792,11 @@ exports.default = {
       return this.isOdd(this.getRow(n)) && !this.isOdd(this.getCol(n)) || !this.isOdd(this.getRow(n)) && this.isOdd(this.getCol(n));
     },
     flip: function flip(ev) {
-      if (ev && ev.preventDefault) {
-        //console.log("Preventing default behaviour.")
-        ev.preventDefault();
-      }
       this.flipped = !this.flipped;
     },
     setBg: function setBg(light, dark) {
-      this.lightSqStyle.backgroundColor = light || this.initialLightBg;
-      this.darkSqStyle.backgroundColor = dark || this.initialDarkBg;
+      this.lightBg = light || this.initialLightBg;
+      this.darkBg = dark || this.initialDarkBg;
     },
     move: function move(from, to, promotion) {
       var currPos = this.position.split('');
@@ -18782,14 +18811,10 @@ exports.default = {
       return this.sqFrom === index;
     },
     getStyle: function getStyle(index) {
-      return this.isSqSelected(index) ? this.selectedSqStyle : this.isLight(index) ? this.lightSqStyle : this.darkSqStyle;
+      return this.isSqSelected(index) ? this.getSelectedSqStyle() : this.isLight(index) ? this.getLightSqStyle() : this.getDarkSqStyle();
     },
     onDragStart: function onDragStart(index, ev) {
-      // console.log(`onDragStart ${index}`)
-      // console.log(ev.target.offsetWidth)
-
       var size = ev.target.offsetWidth;
-      // console.log(`Image size is: ${size}`) 
       var pos = size / 2;
       var ctx = document.createElement('canvas').getContext('2d');
       ctx.canvas.width = size;
@@ -18893,6 +18918,8 @@ exports.default = {
 //
 //
 //
+//
+//
         var $fe081a = exports.default || module.exports;
       
       if (typeof $fe081a === 'function') {
@@ -18908,6 +18935,7 @@ exports.default = {
   return _c(
     "div",
     {
+      staticStyle: { width: "100%" },
       attrs: { alt: _vm.decoratedVersion },
       on: {
         dragover: function($event) {
@@ -18921,9 +18949,21 @@ exports.default = {
         "div",
         {
           key: y,
-          staticStyle: { display: "flex" },
+          staticStyle: { display: "flex", width: "100%" },
           on: {
             dblclick: function($event) {
+              if (
+                !("button" in $event) &&
+                _vm._k(
+                  $event.keyCode,
+                  "cancel",
+                  undefined,
+                  $event.key,
+                  undefined
+                )
+              ) {
+                return null
+              }
               $event.stopPropagation()
               _vm.flip($event)
             }
@@ -18935,6 +18975,7 @@ exports.default = {
             {
               key: x,
               staticStyle: {
+                width: "100%",
                 display: "flex",
                 "flex-direction": "row",
                 "align-self": "center",
@@ -18945,6 +18986,7 @@ exports.default = {
               _c(
                 "div",
                 {
+                  staticClass: "square",
                   style: _vm.getStyle(_vm.getIndex(y, x)),
                   attrs: { "data-index": _vm.getIndex(y, x) },
                   on: {
@@ -18986,6 +19028,7 @@ exports.default = {
               _c(
                 "div",
                 {
+                  staticClass: "square",
                   style: _vm.getStyle(_vm.getIndexPlus(y, x)),
                   attrs: { "data-index": _vm.getIndexPlus(y, x) },
                   on: {
@@ -19104,12 +19147,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //console.log("Hello, World!")
 
 var greet = function greet() {
-  var who = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "World";
+  //  setTimeout(() => console.clear(), 1000)
+  //  console.log(`Hello, ${who}!`)
 
-  setTimeout(function () {
-    return console.clear();
-  }, 1000);
-  console.log('Hello, ' + who + '!');
+  var who = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "World";
 };
 
 greet();
@@ -19122,7 +19163,7 @@ window.vm = new _vue2.default({
   template: '\n      <ChessBoard version="' + _package.version + '" />\n    '
 });
 window.board = vm.$children[0];
-},{"vue/dist/vue.js":7,"./chessboard.vue":3,"./package.json":4}],18:[function(require,module,exports) {
+},{"vue/dist/vue.js":7,"./chessboard.vue":3,"./package.json":4}],8:[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 
@@ -19151,7 +19192,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '34683' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '46025' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -19292,5 +19333,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.parcelRequire, id);
   });
 }
-},{}]},{},[18,1], null)
+},{}]},{},[8,1], null)
 //# sourceMappingURL=/index.map

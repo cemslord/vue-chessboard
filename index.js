@@ -3,8 +3,8 @@
 //console.log("Hello, World!")
 
 const greet = (who = "World") => {
-    setTimeout(() => console.clear(), 1000)
-    console.log(`Hello, ${who}!`)
+    //  setTimeout(() => console.clear(), 1000)
+    //  console.log(`Hello, ${who}!`)
 }
 
 greet()

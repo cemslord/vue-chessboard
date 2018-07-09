@@ -3,14 +3,15 @@
 
 
 <template>
-  <div v-bind:alt="decoratedVersion" @dragover.prevent="onDragOver">
+  <div style="width: 100%" v-bind:alt="decoratedVersion" @dragover.prevent="onDragOver">
     <!--<h2>{{ decoratedVersion }}</h2>-->
-    <div style="display: flex;" v-for="y in 8" v-bind:key="y" @dblclick.stop="flip($event)">
+    <div style="display: flex; width: 100%" v-for="y in 8" v-bind:key="y" @dblclick.stop.cancel="flip($event)">
       <div 
-        style="display: flex; flex-direction: row; align-self: center; justify-content: center;" 
+        style="width: 100%; display: flex; flex-direction: row; align-self: center; justify-content: center;" 
         v-for="x in 4" v-bind:key="x"
       >
-        <div 
+        <div
+          class="square" 
           :style="getStyle(getIndex(y, x))" 
           :data-index="getIndex(y, x)"
           @click="onSqClick(getIndex(y, x))"
@@ -28,6 +29,7 @@
           />
         </div> 
         <div
+          class="square"
           :style="getStyle(getIndexPlus(y, x))" 
           :data-index="getIndexPlus(y, x)"
           @click="onSqClick(getIndexPlus(y, x))"
@@ -55,6 +57,7 @@
     name: "ChessBoard",
     props: {
       version: {type: String, required: false, default: '1.0.0'},
+      initialSelectedBg: {type: String, required: false, default: '#bde6ed'},
       initialLightBg: {type: String, required: false, default: '#F0D9B5'},
       initialDarkBg: {type: String, required: false, default: '#B58863'},
       initialFlipped: {type: Boolean, required: false, default: false},
@@ -65,20 +68,50 @@
       return {
         title: "Vue Chessboard",
         sets: chessSets,
+        selectedBg: this.initialSelectedBg,
         lightBg: this.initialLightBg,
         darkBg: this.initialDarkBg,
         flipped: this.initialFlipped,
-        lightSqStyle: {textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: this.initialLightBg},
-        darkSqStyle: {textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: this.initialDarkBg},
-        selectedSqStyle: {textAlign: 'center', width: '10vh', height: '10vh', backgroundColor: '#00f0f0'},
         emptyPos: "0".repeat(64),
         position: this.initialPos,
         chessSet: this.initialChessSet,
         sqFrom: -1,
-        isDragging: false
+        isDragging: false,
+        isMounted: false
       } 
     },
+    mounted: function() {
+      this.$nextTick(function() {
+        this.isMounted = true
+        let board = this
+        window.addEventListener('resize', () => {board.$forceUpdate()})
+      })
+    },
     methods: {
+      getSqHeight: function() {
+        if (!this.isMounted) return '5vw'
+        let sq0 = document.getElementsByClassName('square')[0]
+        // console.log(`Square height should be ${sq0.offsetWidth}px`)
+        return  `${sq0.offsetWidth}px`
+      },
+      getSqStyle: function() {
+        return {textAlign: 'center', width: '100%', height: this.getSqHeight()}
+      },
+      getLightSqStyle: function() {
+        let tempStyle = this.getSqStyle()
+        tempStyle.backgroundColor = this.lightBg
+        return tempStyle
+      },
+      getDarkSqStyle: function() {
+        let tempStyle = this.getSqStyle()
+        tempStyle.backgroundColor = this.darkBg
+        return tempStyle
+      },
+      getSelectedSqStyle: function() {
+        let tempStyle = this.getSqStyle()
+        tempStyle.backgroundColor = this.selectedBg
+        return tempStyle
+      },
       reset: function() {this.position = this.initialPos},
       empty: function() {this.position = this.emptyPos},
       onDragOver: function() {/* Do nothing */},
@@ -102,15 +135,11 @@
         (!this.isOdd(this.getRow(n)) && this.isOdd(this.getCol(n)))
       },
       flip: function(ev) {
-        if (ev && ev.preventDefault) {
-//console.log("Preventing default behaviour.")
-            ev.preventDefault()
-          }
         this.flipped = !this.flipped
       }, 
       setBg: function(light, dark) {
-        this.lightSqStyle.backgroundColor = light || this.initialLightBg
-        this.darkSqStyle.backgroundColor = dark || this.initialDarkBg
+        this.lightBg = light || this.initialLightBg
+        this.darkBg = dark || this.initialDarkBg
       },
       move: function(from, to, promotion) {
         let currPos = this.position.split('')
@@ -125,15 +154,11 @@
         return this.sqFrom === index
       },
       getStyle: function(index) {
-        return this.isSqSelected(index) ? this.selectedSqStyle : 
-          this.isLight(index) ? this.lightSqStyle : this.darkSqStyle
+        return this.isSqSelected(index) ? this.getSelectedSqStyle() : 
+          this.isLight(index) ? this.getLightSqStyle() : this.getDarkSqStyle()
       },
       onDragStart: function(index, ev) {
-        // console.log(`onDragStart ${index}`)
-        // console.log(ev.target.offsetWidth)
-
         let size = ev.target.offsetWidth
-        // console.log(`Image size is: ${size}`) 
         let pos = size / 2
         let ctx = document.createElement('canvas').getContext('2d')
         ctx.canvas.width = size 
