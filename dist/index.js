@@ -19060,31 +19060,30 @@ render._withStripped = true
       }
     })();
 },{"./chess-sets":13,"vue-hot-reload-api":16,"vue":12}],4:[function(require,module,exports) {
-var _module$exports;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-module.exports = (_module$exports = {
+module.exports = {
   "name": "vue-chessboard",
   "author": "Domingo E. Savoretti",
   "version": "0.1.0",
-  "main": "index.js",
-  "license": "MIT"
-}, _defineProperty(_module$exports, "main", "dist/index.js"), _defineProperty(_module$exports, "dependencies", {
-  "vue-hot-reload-api": "^2.3.0"
-}), _defineProperty(_module$exports, "devDependencies", {
-  "@vue/component-compiler-utils": "^2.0.0",
-  "babel-core": "^6.26.3",
-  "node-sass": "^4.9.0",
-  "node-simple-router": "^0.10.1",
-  "parcel-bundler": "^1.9.4",
-  "vue": "^2.5.16",
-  "vue-template-compiler": "^2.5.16"
-}), _defineProperty(_module$exports, "scripts", {
-  "test": "./server.js",
-  "build": "parcel build index.js",
-  "watch": "parcel watch index.js"
-}), _module$exports);
+  "license": "MIT",
+  "main": "dist/index.js",
+  "dependencies": {
+    "vue-hot-reload-api": "^2.3.0"
+  },
+  "devDependencies": {
+    "@vue/component-compiler-utils": "^2.0.0",
+    "babel-core": "^6.26.3",
+    "node-sass": "^4.9.0",
+    "node-simple-router": "^0.10.1",
+    "parcel-bundler": "^1.9.4",
+    "vue": "^2.5.16",
+    "vue-template-compiler": "^2.5.16"
+  },
+  "scripts": {
+    "test": "./server.js",
+    "build": "parcel build index.js",
+    "watch": "parcel watch index.js"
+  }
+};
 },{}],1:[function(require,module,exports) {
 'use strict';
 

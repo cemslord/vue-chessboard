@@ -2,7 +2,6 @@
   "name": "vue-chessboard",
   "author": "Domingo E. Savoretti",
   "version": "0.1.0",
-  "main": "index.js",
   "license": "MIT",
   "main": "dist/index.js",
   "dependencies": {
