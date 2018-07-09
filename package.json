@@ -1,0 +1,25 @@
+{
+  "name": "vue-chessboard",
+  "author": "Domingo E. Savoretti",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "dependencies": {
+    "vue-hot-reload-api": "^2.3.0"
+  },
+  "devDependencies": {
+    "@vue/component-compiler-utils": "^2.0.0",
+    "babel-core": "^6.26.3",
+    "node-sass": "^4.9.0",
+    "node-simple-router": "^0.10.1",
+    "parcel-bundler": "^1.9.4",
+    "vue": "^2.5.16",
+    "vue-template-compiler": "^2.5.16"
+  },
+  "scripts": {
+    "test": "./server.js",
+    "build": "parcel build index.js",
+    "watch": "parcel watch index.js"
+  }
+}
