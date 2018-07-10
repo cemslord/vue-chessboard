@@ -18728,51 +18728,30 @@ exports.default = {
       position: this.initialPos,
       chessSet: this.initialChessSet,
       sqFrom: -1,
+      sqTo: -1,
       isDragging: false,
-      isMounted: false
+      isMounted: false,
+      status_msg: 'Mensajes de depuración',
+      debug: true
     };
   },
   mounted: function mounted() {
     this.$nextTick(function () {
       this.isMounted = true;
       var board = this;
+      this.status_msg = this.decoratedVersion;
       window.addEventListener('resize', function () {
         board.$forceUpdate();
       });
     });
   },
   methods: {
-    getSqHeight: function getSqHeight() {
-      if (!this.isMounted) return '5vw';
-      var sq0 = document.getElementsByClassName('square')[0];
-      // console.log(`Square height should be ${sq0.offsetWidth}px`)
-      return sq0.offsetWidth + 'px';
-    },
-    getSqStyle: function getSqStyle() {
-      return { textAlign: 'center', width: '100%', height: this.getSqHeight() };
-    },
-    getLightSqStyle: function getLightSqStyle() {
-      var tempStyle = this.getSqStyle();
-      tempStyle.backgroundColor = this.lightBg;
-      return tempStyle;
-    },
-    getDarkSqStyle: function getDarkSqStyle() {
-      var tempStyle = this.getSqStyle();
-      tempStyle.backgroundColor = this.darkBg;
-      return tempStyle;
-    },
-    getSelectedSqStyle: function getSelectedSqStyle() {
-      var tempStyle = this.getSqStyle();
-      tempStyle.backgroundColor = this.selectedBg;
-      return tempStyle;
-    },
     reset: function reset() {
       this.position = this.initialPos;
     },
     empty: function empty() {
       this.position = this.emptyPos;
     },
-    onDragOver: function onDragOver() {/* Do nothing */},
     getIndex: function getIndex(y, x) {
       return (y - 1) * 8 + (x - 1) * 2 ^ (this.flipped ? 7 : 56);
     },
@@ -18810,36 +18789,91 @@ exports.default = {
     isSqSelected: function isSqSelected(index) {
       return this.sqFrom === index;
     },
+    getSqHeight: function getSqHeight() {
+      if (!this.isMounted) return '5vw';
+      var sq0 = document.getElementsByClassName('square')[0];
+      // console.log(`Square height should be ${sq0.offsetWidth}px`)
+      return sq0.offsetWidth + 'px';
+    },
+    getSqStyle: function getSqStyle() {
+      return { textAlign: 'center', width: '100%', height: this.getSqHeight() };
+    },
     getStyle: function getStyle(index) {
       return this.isSqSelected(index) ? this.getSelectedSqStyle() : this.isLight(index) ? this.getLightSqStyle() : this.getDarkSqStyle();
     },
+    getOpacity: function getOpacity(index) {
+      var op = index === this.sqFrom && this.isDragging ? 0 : 1;
+      if (op === 0) {}
+      return op;
+    },
+    getLightSqStyle: function getLightSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.lightBg;
+      return tempStyle;
+    },
+    getDarkSqStyle: function getDarkSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.darkBg;
+      return tempStyle;
+    },
+    getSelectedSqStyle: function getSelectedSqStyle() {
+      var tempStyle = this.getSqStyle();
+      tempStyle.backgroundColor = this.selectedBg;
+      return tempStyle;
+    },
     onDragStart: function onDragStart(index, ev) {
+      var ctx = void 0;
+      this.status_msg = 'Dragging from square ' + index;
       var size = ev.target.offsetWidth;
       var pos = size / 2;
-      var ctx = document.createElement('canvas').getContext('2d');
+      if (navigator.userAgent.match(/Firefox/)) {
+        ctx = document.createElement("http://www.w3.org/1999/xhtml", "canvas").getContext('2d');
+      } else {
+        ctx = document.createElement("canvas").getContext('2d');
+      }
       ctx.canvas.width = size;
       ctx.canvas.height = size;
       var img = new Image();
       img.src = ev.target.src;
-      ctx.drawImage(img, 0, 0, size / 4, size / 4);
+      ctx.drawImage(img, 0, 0, size, size);
+      ev.dataTransfer.setData("text/plain", index);
       ev.dataTransfer.setDragImage(ctx.canvas, pos, pos);
       this.isDragging = true;
       this.sqFrom = -1;
       this.onSqClick(index);
+      return true;
     },
-    onDragEnd: function onDragEnd(ev) {
-      //console.log(`Setting isDragging (${this.isDragging}) to false`)
+    onMouseMove: function onMouseMove(index) {
+      if (navigator.userAgent.match(/Firefox/) && this.isDragging) {
+        this.onDragOver(index);
+        return true;
+      } else {
+        return false;
+      }
+    },
+    onDragOver: function onDragOver(index) {
+      this.sqTo = index;
+      this.status_msg = 'Dragging over ' + this.sqTo;
+    },
+    onMouseUp: function onMouseUp(index) {
+      if (navigator.userAgent.match(/Firefox/) && this.isDragging) {
+        this.onDragEnd(index);
+        this.onSqDrop(index);
+        return true;
+      } else {
+        return false;
+      }
+    },
+    onDragEnd: function onDragEnd(index) {
+      var _this = this;
+
+      var currSqTo = this.sqTo;
+      setTimeout(function () {
+        _this.status_msg = 'Ending dragging from square ' + index + ' to square ' + currSqTo;
+      }, 1000);
       this.isDragging = false;
     },
-    getOpacity: function getOpacity(index) {
-      var op = index === this.sqFrom && this.isDragging ? 0 : 1;
-      if (op === 0) {
-        //console.log(`Opacity of square ${index} should be set to 0`)
-      }
-      return op;
-    },
     onSqClick: function onSqClick(index) {
-      //console.log(`Clicked on ${index}`)
       if (this.sqFrom === -1) {
         if (this.isSqEmpty(index)) {
           return -1;
@@ -18854,20 +18888,24 @@ exports.default = {
           return this.sqFrom = -1;
         }
       }
+    },
+    onSqDrop: function onSqDrop(index) {
+      this.status_msg = 'Dropping on square ' + index;
+      this.onSqClick(index);
     }
   },
   computed: {
     decoratedVersion: function decoratedVersion() {
       return this.title + ' v. ' + this.version;
-    },
-    computedLightBg: function computedLightBg() {
-      return this.lightBg || this.initialLightBg;
-    },
-    computedDarkBg: function computedDarkBg() {
-      return this.darkBg || this.initialDarkBg;
     }
   }
 }; //
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -18940,137 +18978,195 @@ exports.default = {
       on: {
         dragover: function($event) {
           $event.preventDefault()
-          return _vm.onDragOver($event)
+          _vm.status_msg = _vm.status_msg + " - Dragging over the main div"
         }
       }
     },
-    _vm._l(8, function(y) {
-      return _c(
-        "div",
-        {
-          key: y,
-          staticStyle: { display: "flex", width: "100%" },
-          on: {
-            dblclick: function($event) {
-              if (
-                !("button" in $event) &&
-                _vm._k(
-                  $event.keyCode,
-                  "cancel",
-                  undefined,
-                  $event.key,
-                  undefined
-                )
-              ) {
-                return null
+    [
+      _vm.debug ? _c("h4", [_vm._v(_vm._s(_vm.status_msg))]) : _vm._e(),
+      _vm._v(" "),
+      _vm._l(8, function(y) {
+        return _c(
+          "div",
+          {
+            key: y,
+            staticStyle: { display: "flex", width: "100%" },
+            on: {
+              dblclick: function($event) {
+                if (
+                  !("button" in $event) &&
+                  _vm._k(
+                    $event.keyCode,
+                    "cancel",
+                    undefined,
+                    $event.key,
+                    undefined
+                  )
+                ) {
+                  return null
+                }
+                $event.stopPropagation()
+                _vm.flip($event)
               }
-              $event.stopPropagation()
-              _vm.flip($event)
             }
-          }
-        },
-        _vm._l(4, function(x) {
-          return _c(
-            "div",
-            {
-              key: x,
-              staticStyle: {
-                width: "100%",
-                display: "flex",
-                "flex-direction": "row",
-                "align-self": "center",
-                "justify-content": "center"
-              }
-            },
-            [
-              _c(
-                "div",
-                {
-                  staticClass: "square",
-                  style: _vm.getStyle(_vm.getIndex(y, x)),
-                  attrs: { "data-index": _vm.getIndex(y, x) },
-                  on: {
-                    click: function($event) {
-                      _vm.onSqClick(_vm.getIndex(y, x))
-                    },
-                    drop: function($event) {
-                      _vm.onSqClick(_vm.getIndex(y, x))
-                    }
-                  }
-                },
-                [
-                  _vm.position[_vm.getIndex(y, x)] !== "0"
-                    ? _c("img", {
-                        style: {
-                          cursor: "pointer",
-                          opacity: _vm.getOpacity(_vm.getIndex(y, x))
-                        },
-                        attrs: {
-                          draggable: "true",
-                          width: "100%",
-                          height: "100%",
-                          src:
-                            _vm.sets[_vm.chessSet][
-                              _vm.position[_vm.getIndex(y, x)]
-                            ]
-                        },
-                        on: {
-                          dragstart: function($event) {
-                            _vm.onDragStart(_vm.getIndex(y, x), $event)
-                          },
-                          dragend: _vm.onDragEnd
+          },
+          _vm._l(4, function(x) {
+            return _c(
+              "div",
+              {
+                key: x,
+                staticStyle: {
+                  width: "100%",
+                  display: "flex",
+                  "flex-direction": "row",
+                  "align-self": "center",
+                  "justify-content": "center"
+                }
+              },
+              [
+                _c(
+                  "div",
+                  {
+                    staticClass: "square",
+                    style: _vm.getStyle(_vm.getIndex(y, x)),
+                    attrs: { droppable: "", "data-index": _vm.getIndex(y, x) },
+                    on: {
+                      dragenter: function($event) {
+                        $event.preventDefault()
+                        _vm.onDragOver(_vm.getIndex(y, x))
+                      },
+                      dragover: function($event) {
+                        $event.preventDefault()
+                        _vm.onDragOver(_vm.getIndex(y, x))
+                      },
+                      click: function($event) {
+                        _vm.onSqClick(_vm.getIndex(y, x))
+                      },
+                      drop: function($event) {
+                        if (
+                          !("button" in $event) &&
+                          _vm._k(
+                            $event.keyCode,
+                            "cancel",
+                            undefined,
+                            $event.key,
+                            undefined
+                          )
+                        ) {
+                          return null
                         }
-                      })
-                    : _vm._e()
-                ]
-              ),
-              _vm._v(" "),
-              _c(
-                "div",
-                {
-                  staticClass: "square",
-                  style: _vm.getStyle(_vm.getIndexPlus(y, x)),
-                  attrs: { "data-index": _vm.getIndexPlus(y, x) },
-                  on: {
-                    click: function($event) {
-                      _vm.onSqClick(_vm.getIndexPlus(y, x))
-                    },
-                    drop: function($event) {
-                      _vm.onSqClick(_vm.getIndexPlus(y, x))
+                        $event.preventDefault()
+                        $event.stopPropagation()
+                        _vm.onSqDrop(_vm.getIndex(y, x))
+                      }
                     }
-                  }
-                },
-                [
-                  _vm.position[_vm.getIndexPlus(y, x)] !== "0"
-                    ? _c("img", {
-                        style: {
-                          cursor: "pointer",
-                          opacity: _vm.getOpacity(_vm.getIndexPlus(y, x))
-                        },
-                        attrs: {
-                          draggable: "true",
-                          width: "100%",
-                          height: "100%",
-                          src:
-                            _vm.sets[_vm.chessSet][
-                              _vm.position[_vm.getIndexPlus(y, x)]
-                            ]
-                        },
-                        on: {
-                          dragstart: function($event) {
-                            _vm.onDragStart(_vm.getIndexPlus(y, x), $event)
+                  },
+                  [
+                    _vm.position[_vm.getIndex(y, x)] !== "0"
+                      ? _c("img", {
+                          style: {
+                            cursor: "pointer",
+                            opacity: _vm.getOpacity(_vm.getIndex(y, x)),
+                            mozOpacity: _vm.getOpacity(_vm.getIndex(y, x))
                           },
-                          dragend: _vm.onDragEnd
+                          attrs: {
+                            draggable: "true",
+                            width: "100%",
+                            height: "100%",
+                            src:
+                              _vm.sets[_vm.chessSet][
+                                _vm.position[_vm.getIndex(y, x)]
+                              ]
+                          },
+                          on: {
+                            dragstart: function($event) {
+                              _vm.onDragStart(_vm.getIndex(y, x), $event)
+                            },
+                            dragend: function($event) {
+                              _vm.onDragEnd(_vm.getIndex(y, x))
+                            }
+                          }
+                        })
+                      : _vm._e()
+                  ]
+                ),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass: "square",
+                    style: _vm.getStyle(_vm.getIndexPlus(y, x)),
+                    attrs: {
+                      droppable: "",
+                      "data-index": _vm.getIndexPlus(y, x)
+                    },
+                    on: {
+                      dragenter: function($event) {
+                        $event.preventDefault()
+                        _vm.onDragOver(_vm.getIndexPlus(y, x))
+                      },
+                      dragover: function($event) {
+                        $event.preventDefault()
+                        _vm.onDragOver(_vm.getIndexPlus(y, x))
+                      },
+                      click: function($event) {
+                        _vm.onSqClick(_vm.getIndexPlus(y, x))
+                      },
+                      drop: function($event) {
+                        if (
+                          !("button" in $event) &&
+                          _vm._k(
+                            $event.keyCode,
+                            "cancel",
+                            undefined,
+                            $event.key,
+                            undefined
+                          )
+                        ) {
+                          return null
                         }
-                      })
-                    : _vm._e()
-                ]
-              )
-            ]
-          )
-        })
-      )
-    })
+                        $event.preventDefault()
+                        $event.stopPropagation()
+                        _vm.onSqDrop(_vm.getIndexPlus(y, x))
+                      }
+                    }
+                  },
+                  [
+                    _vm.position[_vm.getIndexPlus(y, x)] !== "0"
+                      ? _c("img", {
+                          style: {
+                            cursor: "pointer",
+                            opacity: _vm.getOpacity(_vm.getIndexPlus(y, x)),
+                            mozOpacity: _vm.getOpacity(_vm.getIndexPlus(y, x))
+                          },
+                          attrs: {
+                            draggable: "true",
+                            width: "100%",
+                            height: "100%",
+                            src:
+                              _vm.sets[_vm.chessSet][
+                                _vm.position[_vm.getIndexPlus(y, x)]
+                              ]
+                          },
+                          on: {
+                            dragstart: function($event) {
+                              _vm.onDragStart(_vm.getIndexPlus(y, x), $event)
+                            },
+                            dragend: function($event) {
+                              _vm.onDragEnd(_vm.getIndexPlus(y, x))
+                            }
+                          }
+                        })
+                      : _vm._e()
+                  ]
+                )
+              ]
+            )
+          })
+        )
+      })
+    ],
+    2
   )
 }
 var staticRenderFns = []
@@ -19144,16 +19240,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /***************************************************************/
 
-//console.log("Hello, World!")
-
-var greet = function greet() {
-  //  setTimeout(() => console.clear(), 1000)
-  //  console.log(`Hello, ${who}!`)
-
+window.greet = function () {
   var who = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "World";
+
+  setTimeout(function () {
+    return console.clear();
+  }, 1000);
+  console.log('Hello, ' + who + '!');
 };
 
-greet();
+// greet()
 
 /***************************************************************/
 
